@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      jobId: jobData.id,
+      jobId: jobData[0]?.id,
       receiptUrl: urlData.publicUrl,
       message: 'Receipt uploaded successfully. Processing will begin shortly.'
     })
