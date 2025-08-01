@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import SummaryCards from '@/components/dashboard/SummaryCards'
 import CategoriesGrid from '@/components/dashboard/CategoriesGrid'
+import AppLayout from '@/components/layout/AppLayout'
 import useExpenseData from '@/hooks/useExpenseData'
 
 export default function Home() {
@@ -100,19 +101,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen p-8">
-      <header className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Moe Money 4U</h1>
-        <div className="flex items-center gap-4">
-          <span>Welcome, {profile.first_name}</span>
-          <span className="text-sm text-gray-500">({profile.role})</span>
-          <Button onClick={signOut} variant="outline">
-            Sign Out
-          </Button>
-        </div>
-      </header>
-      
-      <main className="max-w-6xl mx-auto space-y-8">
+    <AppLayout>
+      <div className="space-y-8">
         <div>
           <h2 className="text-2xl font-bold mb-6">Expense Dashboard</h2>
           
@@ -135,7 +125,19 @@ export default function Home() {
           <CategoriesGrid categories={expenseData.categories} />
         </div>
 
-        {expenseData.expenses.length === 0 && (
+        {expenseData.expenses.length > 0 ? (
+          <div>
+            <h3 className="text-xl font-semibold mb-4">Recent Expenses</h3>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-sm text-gray-600">
+                You have {expenseData.expenses.length} expenses. View them in the General Ledger.
+              </p>
+              <Link href="/ledger">
+                <Button className="mt-2">View General Ledger</Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
           <div className="text-center py-12">
             <p className="text-gray-600 mb-4">No expenses yet. Ready to start tracking?</p>
             <Button>
@@ -143,7 +145,7 @@ export default function Home() {
             </Button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   )
 }
