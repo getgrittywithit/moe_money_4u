@@ -60,16 +60,10 @@ export default function useExpenseData(): ExpenseData {
 
         if (categoriesError) throw categoriesError
 
-        // Fetch expenses
+        // Fetch expenses (simplified - no joins since table is likely empty)
         const { data: expenses, error: expensesError } = await supabase
           .from('expenses')
-          .select(`
-            id,
-            amount,
-            description,
-            expense_date,
-            expense_categories!inner (name, color)
-          `)
+          .select('id, amount, description, expense_date')
           .eq('profile_id', profile.id)
           .order('expense_date', { ascending: false })
           .limit(50)
@@ -97,9 +91,7 @@ export default function useExpenseData(): ExpenseData {
             amount: Number(exp.amount),
             description: exp.description,
             expense_date: exp.expense_date,
-            category: Array.isArray(exp.expense_categories) 
-              ? exp.expense_categories[0] 
-              : exp.expense_categories
+            category: undefined // No category data for now
           })) || [],
           totalExpenses,
           monthlyTotal,

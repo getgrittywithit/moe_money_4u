@@ -83,8 +83,17 @@ export default function Home() {
             </Button>
           </div>
         </header>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-red-600">Error: {expenseData.error}</div>
+        <div className="max-w-4xl mx-auto">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <h3 className="text-red-800 font-semibold">Dashboard Error</h3>
+            <p className="text-red-600 text-sm mt-1">Error: {expenseData.error}</p>
+            <p className="text-gray-600 text-sm mt-2">Profile ID: {profile.id}</p>
+          </div>
+          <div className="text-center">
+            <Button onClick={() => window.location.reload()}>
+              Reload Dashboard
+            </Button>
+          </div>
         </div>
       </div>
     )
