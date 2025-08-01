@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
@@ -32,7 +34,7 @@ export default function LoginPage() {
           password,
         })
         if (error) throw error
-        window.location.href = '/'
+        router.push('/')
       }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'An error occurred')
