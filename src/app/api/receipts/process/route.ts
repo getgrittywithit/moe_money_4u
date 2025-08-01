@@ -70,12 +70,9 @@ export async function POST(request: NextRequest) {
 
     console.log('Looking up job:', jobId)
 
-    // Get the processing job
-    const { data: job, error: jobError } = await supabase
-      .from('receipt_processing_jobs')
-      .select('*')
-      .eq('id', jobId)
-      .single()
+    // Get the processing job using function (bypasses RLS)
+    const { data: jobRows, error: jobError } = await supabase
+      .rpc('get_receipt_job', { job_id: jobId })
 
     if (jobError) {
       console.log('Job lookup error:', jobError)
@@ -85,6 +82,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const job = jobRows?.[0]
     if (!job) {
       console.log('Job not found:', jobId)
       return NextResponse.json(
@@ -96,10 +94,11 @@ export async function POST(request: NextRequest) {
     console.log('Found job:', job.id, 'Image URL:', job.receipt_image_url)
 
     // Update job status to processing
-    await supabase
-      .from('receipt_processing_jobs')
-      .update({ status: 'processing', processed_at: new Date().toISOString() })
-      .eq('id', jobId)
+    await supabase.rpc('update_receipt_job', {
+      job_id: jobId,
+      p_status: 'processing',
+      p_processed_at: new Date().toISOString()
+    })
 
     try {
       console.log('Starting OCR processing...')
@@ -114,17 +113,11 @@ export async function POST(request: NextRequest) {
       }
 
       // Update job with OCR results
-      const { error: updateError } = await supabase
-        .from('receipt_processing_jobs')
-        .update({ 
-          ocr_text: extractedText,
-          status: 'completed'
-        })
-        .eq('id', jobId)
-
-      if (updateError) {
-        throw new Error('Failed to update job with OCR results')
-      }
+      await supabase.rpc('update_receipt_job', {
+        job_id: jobId,
+        p_ocr_text: extractedText,
+        p_status: 'completed'
+      })
 
       // Now call AI categorization
       const categorizationResponse = await fetch(`${request.nextUrl.origin}/api/receipts/categorize`, {
@@ -151,13 +144,11 @@ export async function POST(request: NextRequest) {
       console.error('Processing error:', processingError)
       
       // Update job with error status
-      await supabase
-        .from('receipt_processing_jobs')
-        .update({ 
-          status: 'failed',
-          error_message: processingError instanceof Error ? processingError.message : 'Processing failed'
-        })
-        .eq('id', jobId)
+      await supabase.rpc('update_receipt_job', {
+        job_id: jobId,
+        p_status: 'failed',
+        p_error_message: processingError instanceof Error ? processingError.message : 'Processing failed'
+      })
 
       throw processingError
     }

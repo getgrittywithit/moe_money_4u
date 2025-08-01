@@ -73,16 +73,12 @@ export async function POST(request: NextRequest) {
       .from('receipts')
       .getPublicUrl(fileName)
 
-    // Create processing job record
+    // Create processing job record using service role (bypasses RLS)
     const { data: jobData, error: jobError } = await supabase
-      .from('receipt_processing_jobs')
-      .insert({
-        profile_id: profileId,
-        receipt_image_url: urlData.publicUrl,
-        status: 'pending'
+      .rpc('create_receipt_job', {
+        p_profile_id: profileId,
+        p_receipt_image_url: urlData.publicUrl
       })
-      .select()
-      .single()
 
     if (jobError) {
       console.error('Job creation error:', jobError)
