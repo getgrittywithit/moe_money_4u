@@ -62,6 +62,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const linkProfileToUser = async (user: User) => {
     try {
+      console.log('Attempting to link profile for:', user.email)
+      
+      // Add timeout to prevent hanging
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+
       const response = await fetch('/api/link-profile', {
         method: 'POST',
         headers: {
@@ -71,57 +77,81 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: user.email,
           userId: user.id,
         }),
+        signal: controller.signal
       })
+
+      clearTimeout(timeoutId)
 
       if (response.ok) {
         const result = await response.json()
+        console.log('Profile linked successfully:', result.profile)
         return result.profile
+      } else {
+        console.log('Profile linking failed:', response.status, response.statusText)
       }
     } catch (error) {
-      console.error('Error linking profile:', error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.error('Profile linking timed out')
+      } else {
+        console.error('Error linking profile:', error)
+      }
     }
     return null
   }
 
   useEffect(() => {
     const getSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      setUser(session?.user ?? null)
-      
-      if (session?.user) {
-        let profileData = await getProfile(session.user.id)
+      try {
+        console.log('Getting auth session...')
+        const { data: { session } } = await supabase.auth.getSession()
+        setUser(session?.user ?? null)
         
-        // If no profile found, try to link existing profile
-        if (!profileData) {
-          profileData = await linkProfileToUser(session.user)
+        if (session?.user) {
+          console.log('User found, getting profile for:', session.user.email)
+          let profileData = await getProfile(session.user.id)
+          
+          // If no profile found, try to link existing profile
+          if (!profileData) {
+            console.log('No profile found, attempting to link...')
+            profileData = await linkProfileToUser(session.user)
+          }
+          
+          setProfile(profileData)
+          console.log('Profile set:', profileData ? 'Success' : 'Failed')
         }
-        
-        setProfile(profileData)
+      } catch (error) {
+        console.error('Error in getSession:', error)
+      } finally {
+        setLoading(false)
+        console.log('Auth loading complete')
       }
-      
-      setLoading(false)
     }
 
     getSession()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          let profileData = await getProfile(session.user.id)
+        try {
+          console.log('Auth state change:', event, session?.user?.email)
+          setUser(session?.user ?? null)
           
-          // If no profile found, try to link existing profile
-          if (!profileData && event === 'SIGNED_IN') {
-            profileData = await linkProfileToUser(session.user)
+          if (session?.user) {
+            let profileData = await getProfile(session.user.id)
+            
+            // If no profile found, try to link existing profile
+            if (!profileData && event === 'SIGNED_IN') {
+              profileData = await linkProfileToUser(session.user)
+            }
+            
+            setProfile(profileData)
+          } else {
+            setProfile(null)
           }
-          
-          setProfile(profileData)
-        } else {
-          setProfile(null)
+        } catch (error) {
+          console.error('Error in auth state change:', error)
+        } finally {
+          setLoading(false)
         }
-        
-        setLoading(false)
       }
     )
 
