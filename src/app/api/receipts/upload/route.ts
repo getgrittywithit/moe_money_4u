@@ -8,6 +8,17 @@ const supabase = createClient(
 
 export async function POST(request: NextRequest) {
   try {
+    // Check content length before parsing
+    const contentLength = request.headers.get('content-length')
+    const maxSize = 5 * 1024 * 1024 // Reduce to 5MB for better reliability
+    
+    if (contentLength && parseInt(contentLength) > maxSize) {
+      return NextResponse.json(
+        { error: 'File too large. Maximum size is 5MB.' },
+        { status: 413 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('receipt') as File
     const profileId = formData.get('profileId') as string
@@ -28,12 +39,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate file size (max 10MB)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    // Double-check file size after parsing
     if (file.size > maxSize) {
       return NextResponse.json(
-        { error: 'File too large. Maximum size is 10MB.' },
-        { status: 400 }
+        { error: 'File too large. Maximum size is 5MB.' },
+        { status: 413 }
       )
     }
 

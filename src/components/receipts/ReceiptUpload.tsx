@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Upload, FileImage, Loader2 } from 'lucide-react'
+import imageCompression from 'browser-image-compression'
 
 interface ReceiptUploadProps {
   profileId: string
@@ -15,10 +16,32 @@ export default function ReceiptUpload({ profileId, onUploadComplete }: ReceiptUp
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
-      setFile(selectedFile)
+      // If it's an image and larger than 3MB, compress it
+      if (selectedFile.type.startsWith('image/') && selectedFile.size > 3 * 1024 * 1024) {
+        try {
+          console.log('Compressing large image...')
+          const options = {
+            maxSizeMB: 3,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            fileType: 'image/jpeg'
+          }
+          const compressedFile = await imageCompression(selectedFile, options)
+          setFile(compressedFile)
+          console.log('Image compressed:', { 
+            original: selectedFile.size, 
+            compressed: compressedFile.size 
+          })
+        } catch (compressionError) {
+          console.error('Compression failed:', compressionError)
+          setFile(selectedFile) // Use original if compression fails
+        }
+      } else {
+        setFile(selectedFile)
+      }
       setError(null)
     }
   }
@@ -26,6 +49,13 @@ export default function ReceiptUpload({ profileId, onUploadComplete }: ReceiptUp
   const handleUpload = async () => {
     if (!file) {
       setError('Please select a receipt image')
+      return
+    }
+
+    // Client-side file size check
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      setError('File too large. Please choose an image smaller than 5MB.')
       return
     }
 
@@ -42,7 +72,16 @@ export default function ReceiptUpload({ profileId, onUploadComplete }: ReceiptUp
         body: formData
       })
 
-      const result = await response.json()
+      let result
+      try {
+        result = await response.json()
+      } catch (parseError) {
+        // Handle cases where response is not JSON (like 413 errors)
+        if (response.status === 413) {
+          throw new Error('File too large. Please choose an image smaller than 5MB.')
+        }
+        throw new Error(`Server error: ${response.status} ${response.statusText}`)
+      }
 
       if (!response.ok) {
         throw new Error(result.error || 'Upload failed')
@@ -146,7 +185,7 @@ export default function ReceiptUpload({ profileId, onUploadComplete }: ReceiptUp
       
       <div className="mt-4 text-xs text-gray-500">
         <p>• Supported formats: JPEG, PNG, WebP, PDF</p>
-        <p>• Maximum file size: 10MB</p>
+        <p>• Maximum file size: 5MB</p>
         <p>• Processing typically takes 10-30 seconds</p>
       </div>
     </div>
