@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 
 interface Expense {
   id: string
@@ -10,8 +12,7 @@ interface Expense {
   name: string
   amount: number
   status_text: string
-  parent_category: string | null
-  excluded: boolean
+  business_class: string | null
   tags: string[] | null
   transaction_type_text: string
   account: string | null
@@ -33,6 +34,20 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isAddingRow, setIsAddingRow] = useState(false)
+  const [newExpense, setNewExpense] = useState({
+    expense_date: new Date().toISOString().split('T')[0],
+    name: '',
+    amount: '',
+    status_text: 'pending',
+    business_class: '',
+    tags: '',
+    transaction_type_text: 'regular',
+    account: '',
+    account_mask: '',
+    note: '',
+    recurring: ''
+  })
 
   useEffect(() => {
     fetchExpenses()
@@ -49,8 +64,7 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
           name,
           amount,
           status_text,
-          parent_category,
-          excluded,
+          business_class,
           tags,
           transaction_type_text,
           account,
@@ -103,6 +117,63 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
     })
   }
 
+  const handleAddExpense = async () => {
+    if (!newExpense.name || !newExpense.amount) {
+      alert('Please fill in Name and Amount')
+      return
+    }
+
+    try {
+      const amount = parseFloat(newExpense.amount)
+      if (isNaN(amount)) {
+        alert('Please enter a valid amount')
+        return
+      }
+
+      const { error } = await supabase
+        .from('expenses')
+        .insert({
+          profile_id: profileId,
+          expense_date: newExpense.expense_date,
+          name: newExpense.name,
+          amount: amount,
+          description: newExpense.name,
+          status_text: newExpense.status_text,
+          business_class: newExpense.business_class || null,
+          tags: newExpense.tags ? newExpense.tags.split(',').map(t => t.trim()) : null,
+          transaction_type_text: newExpense.transaction_type_text,
+          account: newExpense.account || null,
+          account_mask: newExpense.account_mask || null,
+          note: newExpense.note || null,
+          recurring: newExpense.recurring || null,
+          expense_type: newExpense.business_class ? 'business' : 'personal'
+        })
+        .select()
+
+      if (error) throw error
+
+      // Reset form and refresh data
+      setNewExpense({
+        expense_date: new Date().toISOString().split('T')[0],
+        name: '',
+        amount: '',
+        status_text: 'pending',
+        business_class: '',
+        tags: '',
+        transaction_type_text: 'regular',
+        account: '',
+        account_mask: '',
+        note: '',
+        recurring: ''
+      })
+      setIsAddingRow(false)
+      fetchExpenses()
+    } catch (error) {
+      console.error('Error adding expense:', error)
+      alert('Failed to add expense')
+    }
+  }
+
   if (loading) {
     return <div className="text-center py-8">Loading general ledger...</div>
   }
@@ -116,8 +187,20 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
   }
 
   return (
-    <div className="overflow-x-auto bg-white rounded-lg shadow">
-      <table className="min-w-full divide-y divide-gray-200">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-medium">Transactions</h3>
+        <Button
+          onClick={() => setIsAddingRow(true)}
+          disabled={isAddingRow}
+          size="sm"
+        >
+          Add Expense
+        </Button>
+      </div>
+      
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -136,10 +219,7 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
               Category
             </th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Parent Category
-            </th>
-            <th className="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Excluded
+              Class
             </th>
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Tags
@@ -156,11 +236,138 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
             <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Recurring
             </th>
+            <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
+          {isAddingRow && (
+            <tr className="bg-blue-50">
+              <td className="px-2 py-2">
+                <Input
+                  type="date"
+                  value={newExpense.expense_date}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, expense_date: e.target.value }))}
+                  className="text-xs h-8"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <Input
+                  placeholder="Name/Merchant"
+                  value={newExpense.name}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, name: e.target.value }))}
+                  className="text-xs h-8"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <Input
+                  type="number"
+                  step="0.01"
+                  placeholder="Amount"
+                  value={newExpense.amount}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, amount: e.target.value }))}
+                  className="text-xs h-8 text-right"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <select
+                  value={newExpense.status_text}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, status_text: e.target.value }))}
+                  className="text-xs h-8 w-full border border-gray-300 rounded"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="posted">Posted</option>
+                  <option value="cleared">Cleared</option>
+                </select>
+              </td>
+              <td className="px-2 py-2">
+                <span className="text-xs text-gray-500">Auto</span>
+              </td>
+              <td className="px-2 py-2">
+                <select
+                  value={newExpense.business_class}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, business_class: e.target.value }))}
+                  className="text-xs h-8 w-full border border-gray-300 rounded"
+                >
+                  <option value="">Personal</option>
+                  <option value="triton">Triton</option>
+                  <option value="grit_collective">Grit Collective</option>
+                  <option value="mermaid">Mermaid</option>
+                  <option value="pantrypal_pro">PantryPal Pro</option>
+                  <option value="boernes_handy_hub">Boerne&apos;s Handy Hub</option>
+                </select>
+              </td>
+              <td className="px-2 py-2">
+                <Input
+                  placeholder="tag1, tag2"
+                  value={newExpense.tags}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, tags: e.target.value }))}
+                  className="text-xs h-8"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <select
+                  value={newExpense.transaction_type_text}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, transaction_type_text: e.target.value }))}
+                  className="text-xs h-8 w-full border border-gray-300 rounded"
+                >
+                  <option value="regular">Regular</option>
+                  <option value="income">Income</option>
+                  <option value="internal_transfer">Transfer</option>
+                </select>
+              </td>
+              <td className="px-2 py-2">
+                <div className="flex gap-1">
+                  <Input
+                    placeholder="Account"
+                    value={newExpense.account}
+                    onChange={(e) => setNewExpense(prev => ({ ...prev, account: e.target.value }))}
+                    className="text-xs h-8 w-20"
+                  />
+                  <Input
+                    placeholder="Mask"
+                    value={newExpense.account_mask}
+                    onChange={(e) => setNewExpense(prev => ({ ...prev, account_mask: e.target.value }))}
+                    className="text-xs h-8 w-16"
+                  />
+                </div>
+              </td>
+              <td className="px-2 py-2">
+                <Input
+                  placeholder="Note"
+                  value={newExpense.note}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, note: e.target.value }))}
+                  className="text-xs h-8"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <Input
+                  placeholder="Recurring"
+                  value={newExpense.recurring}
+                  onChange={(e) => setNewExpense(prev => ({ ...prev, recurring: e.target.value }))}
+                  className="text-xs h-8"
+                />
+              </td>
+              <td className="px-2 py-2">
+                <div className="flex gap-1">
+                  <Button onClick={handleAddExpense} size="sm" className="h-6 px-2 text-xs">
+                    Save
+                  </Button>
+                  <Button 
+                    onClick={() => setIsAddingRow(false)} 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-6 px-2 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </td>
+            </tr>
+          )}
           {expenses.map((expense) => (
-            <tr key={expense.id} className={expense.excluded ? 'opacity-50' : ''}>
+            <tr key={expense.id}>
               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
                 {formatDate(expense.expense_date)}
               </td>
@@ -193,10 +400,11 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
                 </Badge>
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                {expense.parent_category || '-'}
-              </td>
-              <td className="px-3 py-2 whitespace-nowrap text-center text-sm text-gray-500">
-                {expense.excluded ? '✓' : '-'}
+                {expense.business_class ? (
+                  <Badge variant="outline" className="text-xs bg-blue-50 border-blue-200 text-blue-800">
+                    {expense.business_class.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </Badge>
+                ) : '-'}
               </td>
               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                 {expense.tags?.join(', ') || '-'}
@@ -218,21 +426,28 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
               <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                 {expense.recurring || '-'}
               </td>
+              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                {/* Edit/Delete actions can go here later */}
+                -
+              </td>
             </tr>
           ))}
+          
+          {expenses.length === 0 && !isAddingRow && (
+            <tr>
+              <td colSpan={12} className="text-center py-8">
+                <p className="text-gray-500">No expenses found. Add your first expense to get started.</p>
+              </td>
+            </tr>
+          )}
+          
+          <tr className="bg-gray-50">
+            <td colSpan={12} className="px-4 py-3 text-sm text-gray-700">
+              Showing {expenses.length} transactions
+            </td>
+          </tr>
         </tbody>
       </table>
-      
-      {expenses.length === 0 && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">No expenses found. Add your first expense to get started.</p>
-        </div>
-      )}
-      
-      <div className="bg-gray-50 px-4 py-3 sm:px-6">
-        <p className="text-sm text-gray-700">
-          Showing {expenses.length} transactions
-        </p>
       </div>
     </div>
   )

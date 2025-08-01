@@ -5,7 +5,6 @@ import { usePathname } from 'next/navigation'
 import { 
   LayoutDashboard, 
   FileText, 
-  PlusCircle, 
   Tags, 
   Wallet, 
   Upload, 
@@ -16,7 +15,6 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'General Ledger', href: '/ledger', icon: FileText },
-  { name: 'Add Expense', href: '/expenses/add', icon: PlusCircle },
   { name: 'Categories', href: '/categories', icon: Tags },
   { name: 'Accounts', href: '/accounts', icon: Wallet },
   { name: 'Import/Export', href: '/import-export', icon: Upload },
