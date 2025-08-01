@@ -7,8 +7,21 @@ import SummaryCards from '@/components/dashboard/SummaryCards'
 import CategoriesGrid from '@/components/dashboard/CategoriesGrid'
 import AppLayout from '@/components/layout/AppLayout'
 import useExpenseData from '@/hooks/useExpenseData'
+import ClientOnly from '@/components/ClientOnly'
 
 export default function Home() {
+  return (
+    <ClientOnly fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Loading...</div>
+      </div>
+    }>
+      <HomeContent />
+    </ClientOnly>
+  )
+}
+
+function HomeContent() {
   const { user, profile, loading, signOut } = useAuth()
   const expenseData = useExpenseData()
 
