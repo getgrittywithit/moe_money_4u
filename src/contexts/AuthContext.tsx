@@ -60,13 +60,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }
 
+  const linkProfileToUser = async (user: User) => {
+    try {
+      const response = await fetch('/api/link-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: user.email,
+          userId: user.id,
+        }),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        return result.profile
+      }
+    } catch (error) {
+      console.error('Error linking profile:', error)
+    }
+    return null
+  }
+
   useEffect(() => {
     const getSession = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       setUser(session?.user ?? null)
       
       if (session?.user) {
-        const profileData = await getProfile(session.user.id)
+        let profileData = await getProfile(session.user.id)
+        
+        // If no profile found, try to link existing profile
+        if (!profileData) {
+          profileData = await linkProfileToUser(session.user)
+        }
+        
         setProfile(profileData)
       }
       
@@ -80,7 +109,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          const profileData = await getProfile(session.user.id)
+          let profileData = await getProfile(session.user.id)
+          
+          // If no profile found, try to link existing profile
+          if (!profileData && event === 'SIGNED_IN') {
+            profileData = await linkProfileToUser(session.user)
+          }
+          
           setProfile(profileData)
         } else {
           setProfile(null)
