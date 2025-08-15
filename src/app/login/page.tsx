@@ -12,6 +12,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isResetPassword, setIsResetPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -21,7 +22,14 @@ export default function LoginPage() {
     setMessage('')
 
     try {
-      if (isSignUp) {
+      if (isResetPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/login`,
+        })
+        if (error) throw error
+        setMessage('Check your email for the password reset link!')
+        setIsResetPassword(false)
+      } else if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -48,7 +56,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-center">
-            {isSignUp ? 'Sign Up' : 'Sign In'}
+            {isResetPassword ? 'Reset Password' : isSignUp ? 'Sign Up' : 'Sign In'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -62,32 +70,56 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
+            {!isResetPassword && (
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
+              {loading ? 'Loading...' : 
+                isResetPassword ? 'Send Reset Link' : 
+                isSignUp ? 'Sign Up' : 'Sign In'}
             </Button>
           </form>
           
           {message && (
-            <p className="mt-4 text-sm text-center text-red-600">{message}</p>
+            <p className={`mt-4 text-sm text-center ${message.includes('Check your email') ? 'text-green-600' : 'text-red-600'}`}>
+              {message}
+            </p>
           )}
           
-          <div className="mt-4 text-center">
-            <button
-              type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
-              className="text-sm text-blue-600 hover:underline"
-            >
-              {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-            </button>
+          <div className="mt-4 space-y-2">
+            {!isResetPassword && (
+              <div className="text-center">
+                <button
+                  type="button"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  className="text-sm text-blue-600 hover:underline"
+                >
+                  {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+                </button>
+              </div>
+            )}
+            
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsResetPassword(!isResetPassword)
+                  setMessage('')
+                  setPassword('')
+                }}
+                className="text-sm text-blue-600 hover:underline"
+              >
+                {isResetPassword ? 'Back to sign in' : 'Forgot your password?'}
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

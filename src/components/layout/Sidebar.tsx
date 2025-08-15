@@ -9,12 +9,14 @@ import {
   Wallet, 
   Upload, 
   BarChart3, 
-  Settings 
+  Settings,
+  MessageSquare
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
   { name: 'General Ledger', href: '/ledger', icon: FileText },
+  { name: 'Receipt Chat', href: '/receipt-chat', icon: MessageSquare },
   { name: 'Categories', href: '/categories', icon: Tags },
   { name: 'Accounts', href: '/accounts', icon: Wallet },
   { name: 'Import/Export', href: '/import-export', icon: Upload },
