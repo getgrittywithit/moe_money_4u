@@ -89,7 +89,7 @@ PAYMENT: CREDIT CARD
         .from('receipt_processing_jobs')
         .update({ status: 'processing' })
         .eq('id', jobId)
-    } catch (error) {
+    } catch {
       console.log('Receipt processing jobs table not found, continuing with demo')
     }
 
@@ -163,7 +163,7 @@ Format your response as JSON:
 
     // Validate categories
     if (parsedResponse.lineItems) {
-      parsedResponse.lineItems = parsedResponse.lineItems.map((item: any) => ({
+      parsedResponse.lineItems = parsedResponse.lineItems.map((item: { category?: string; confidence?: number; [key: string]: unknown }) => ({
         ...item,
         category: EXPENSE_CATEGORIES.includes(item.category) ? item.category : 'Uncategorized',
         confidence: Math.min(Math.max(item.confidence || 50, 0), 100)
@@ -181,7 +181,7 @@ Format your response as JSON:
           processed_at: new Date().toISOString()
         })
         .eq('id', jobId)
-    } catch (error) {
+    } catch {
       console.log('Receipt processing jobs table not found, continuing with demo')
     }
 
@@ -214,7 +214,7 @@ Format your response as JSON:
           })
           .eq('id', jobId)
       }
-    } catch (dbError) {
+    } catch {
       console.log('Could not update job error status, continuing')
     }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,7 +32,7 @@ export default function ReceiptChatPage() {
     {
       id: '1',
       role: 'assistant',
-      content: 'Hi! I can help you categorize your receipts. Upload a receipt image and I\'ll analyze it line by line, categorizing each item for you.',
+      content: 'Hi! I can help you categorize your receipts. Upload a receipt image and I&apos;ll analyze it line by line, categorizing each item for you.',
       timestamp: new Date()
     }
   ])
@@ -186,9 +187,11 @@ export default function ReceiptChatPage() {
                   <p className="text-sm">{message.content}</p>
                   
                   {message.imageUrl && (
-                    <img
+                    <Image
                       src={message.imageUrl}
                       alt="Receipt"
+                      width={300}
+                      height={200}
                       className="mt-2 rounded max-w-xs"
                     />
                   )}
@@ -237,7 +240,7 @@ export default function ReceiptChatPage() {
         <div className="p-4 border-t">
           {previewUrl && (
             <div className="mb-2 relative inline-block">
-              <img src={previewUrl} alt="Preview" className="h-20 rounded" />
+              <Image src={previewUrl} alt="Preview" width={80} height={80} className="h-20 rounded" />
               <button
                 onClick={() => {
                   setSelectedFile(null)

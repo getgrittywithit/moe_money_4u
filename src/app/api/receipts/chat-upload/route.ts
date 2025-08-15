@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,7 +32,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(arrayBuffer)
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from('receipts')
       .upload(fileName, buffer, {
         contentType: file.type,
@@ -69,7 +68,7 @@ export async function POST(request: NextRequest) {
       if (job && !jobError) {
         jobId = job.id
       }
-    } catch (error) {
+    } catch {
       console.log('Receipt processing jobs table not found, using demo job ID')
     }
 
