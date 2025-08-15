@@ -50,8 +50,12 @@ const EXPENSE_CATEGORIES = [
 ]
 
 export async function POST(request: NextRequest) {
+  let jobId: string | undefined
+
   try {
-    const { jobId, imageUrl, userInput } = await request.json()
+    const requestData = await request.json()
+    jobId = requestData.jobId
+    const { imageUrl, userInput } = requestData
 
     if (!jobId || !imageUrl) {
       return NextResponse.json(
