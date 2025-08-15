@@ -75,7 +75,7 @@ export default function ReceiptUpload({ profileId, onUploadComplete }: ReceiptUp
       let result
       try {
         result = await response.json()
-      } catch (parseError) {
+      } catch {
         // Handle cases where response is not JSON (like 413 errors)
         if (response.status === 413) {
           throw new Error('File too large. Please choose an image smaller than 5MB.')

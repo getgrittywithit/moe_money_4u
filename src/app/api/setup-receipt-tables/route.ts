@@ -6,7 +6,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     console.log('Setting up receipt processing tables...')
     const results = []
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     }
 
     // For now, let's try a different approach - check if we can access expenses table
-    const { data: expensesData, error: expensesError } = await supabase
+    const { error: expensesError } = await supabase
       .from('expenses')
       .select('id, parent_transaction_id, is_split_transaction')
       .limit(1)

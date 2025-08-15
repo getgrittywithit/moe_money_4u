@@ -24,7 +24,7 @@ export async function GET() {
 
     // Test 2: Database connection
     try {
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('receipt_processing_jobs')
         .select('count')
         .limit(1)
@@ -44,7 +44,7 @@ export async function GET() {
 
     // Test 3: Storage bucket
     try {
-      const { data: buckets, error: bucketError } = await supabase.storage.listBuckets()
+      const { data: buckets } = await supabase.storage.listBuckets()
       const receiptsBucket = buckets?.find(bucket => bucket.name === 'receipts')
       
       results.tests.push({

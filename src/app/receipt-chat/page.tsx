@@ -163,7 +163,7 @@ export default function ReceiptChatPage() {
       <Card className="flex-1 flex flex-col m-4">
         <div className="p-4 border-b">
           <h1 className="text-2xl font-bold">Receipt Parser Chat</h1>
-          <p className="text-sm text-muted-foreground">Upload receipts and I'll categorize each item</p>
+          <p className="text-sm text-muted-foreground">Upload receipts and I&apos;ll categorize each item</p>
         </div>
 
         <div className="flex-1 p-4 overflow-y-auto max-h-[calc(100vh-12rem)]">
