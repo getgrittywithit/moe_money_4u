@@ -165,7 +165,7 @@ Format your response as JSON:
     if (parsedResponse.lineItems) {
       parsedResponse.lineItems = parsedResponse.lineItems.map((item: { category?: string; confidence?: number; [key: string]: unknown }) => ({
         ...item,
-        category: EXPENSE_CATEGORIES.includes(item.category) ? item.category : 'Uncategorized',
+        category: (item.category && EXPENSE_CATEGORIES.includes(item.category)) ? item.category : 'Uncategorized',
         confidence: Math.min(Math.max(item.confidence || 50, 0), 100)
       }))
     }
