@@ -58,7 +58,7 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
   }
 
   const loadPredefinedCategories = async () => {
-    if (!confirm('This will replace your current categories with the predefined ones. Continue?')) return
+    if (!confirm('This will add your personal expense categories. Continue?')) return
     
     try {
       setLoading(true)
@@ -71,11 +71,35 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
       if (!response.ok) throw new Error('Failed to load predefined categories')
       
       const data = await response.json()
-      toast.success(`Loaded ${data.categoriesCreated} categories with ${data.budgetsCreated} budgets!`)
+      toast.success(`Loaded ${data.categoriesCreated} personal categories with ${data.budgetsCreated} budgets!`)
       fetchCategories()
     } catch (error) {
       console.error('Error loading predefined categories:', error)
       toast.error('Failed to load predefined categories')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadBusinessCategories = async () => {
+    if (!confirm('This will add Cheetah Elevation, LLC business categories. Continue?')) return
+    
+    try {
+      setLoading(true)
+      const response = await fetch('/api/categories/bulk-insert-business', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId })
+      })
+
+      if (!response.ok) throw new Error('Failed to load business categories')
+      
+      const data = await response.json()
+      toast.success(`Loaded ${data.categoriesCreated} ${data.businessName} categories with ${data.budgetsCreated} budgets!`)
+      fetchCategories()
+    } catch (error) {
+      console.error('Error loading business categories:', error)
+      toast.error('Failed to load business categories')
     } finally {
       setLoading(false)
     }
@@ -176,7 +200,14 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
             onClick={loadPredefinedCategories}
             disabled={loading}
           >
-            Load My Categories
+            Load Personal Categories
+          </Button>
+          <Button 
+            variant="outline"
+            onClick={loadBusinessCategories}
+            disabled={loading}
+          >
+            Load Business Categories
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
@@ -257,6 +288,9 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
                   <CardTitle className="text-lg">{category.name}</CardTitle>
                   {category.is_default && (
                     <Badge variant="secondary" className="text-xs">Default</Badge>
+                  )}
+                  {(category.name.startsWith('B - ') || category.name.includes('COGS') || category.name === 'Work food') && (
+                    <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">Business</Badge>
                   )}
                 </div>
                 <div className="flex gap-1">
