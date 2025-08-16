@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/layout/AppLayout'
+import CategoryManager from '@/components/categories/CategoryManager'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
@@ -21,12 +22,7 @@ export default function CategoriesPage() {
 
   return (
     <AppLayout>
-      <div>
-        <h2 className="text-2xl font-bold mb-6">Categories</h2>
-        <div className="bg-white rounded-lg shadow p-6">
-          <p className="text-gray-600">Category management coming soon...</p>
-        </div>
-      </div>
+      <CategoryManager profileId={profile.id} />
     </AppLayout>
   )
 }
