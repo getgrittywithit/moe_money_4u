@@ -66,27 +66,30 @@ export default function LedgerPage() {
   }
 
   return (
-    <AppLayout>
-      <div>
-        <h2 className="text-2xl font-bold mb-6">General Ledger</h2>
-        
-        <PendingTransactions
-          profileId={profile.id}
-          draftTransactions={draftTransactions}
-          onTransactionsApproved={handleTransactionsApproved}
-          onTransactionRemoved={handleTransactionRemoved}
-        />
-        
-        <GeneralLedgerTable 
-          profileId={profile.id} 
-          refreshTrigger={refreshLedger}
-        />
-        
-        <AIChatWidget
-          profileId={profile.id}
-          onDraftTransactions={handleDraftTransactions}
-        />
-      </div>
-    </AppLayout>
+    <>
+      <AppLayout>
+        <div>
+          <h2 className="text-2xl font-bold mb-6">General Ledger</h2>
+          
+          <PendingTransactions
+            profileId={profile.id}
+            draftTransactions={draftTransactions}
+            onTransactionsApproved={handleTransactionsApproved}
+            onTransactionRemoved={handleTransactionRemoved}
+          />
+          
+          <GeneralLedgerTable 
+            profileId={profile.id} 
+            refreshTrigger={refreshLedger}
+          />
+        </div>
+      </AppLayout>
+      
+      {/* AIChatWidget outside of AppLayout to avoid overflow clipping */}
+      <AIChatWidget
+        profileId={profile.id}
+        onDraftTransactions={handleDraftTransactions}
+      />
+    </>
   )
 }
