@@ -28,9 +28,10 @@ interface Expense {
 
 interface GeneralLedgerTableProps {
   profileId: string
+  refreshTrigger?: number
 }
 
-export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProps) {
+export default function GeneralLedgerTable({ profileId, refreshTrigger }: GeneralLedgerTableProps) {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -51,7 +52,7 @@ export default function GeneralLedgerTable({ profileId }: GeneralLedgerTableProp
 
   useEffect(() => {
     fetchExpenses()
-  }, [profileId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [profileId, refreshTrigger]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchExpenses = async () => {
     try {
