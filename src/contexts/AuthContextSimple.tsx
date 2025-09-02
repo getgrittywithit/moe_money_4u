@@ -62,32 +62,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.log('Simple Auth: Session exists, access_token present:', !!session.access_token)
           
           try {
-            // Add a small delay to ensure auth state is fully set
-            await new Promise(resolve => setTimeout(resolve, 100))
+            // Since client queries are hanging, use API endpoint that we know works
+            console.log('Simple Auth: Using API fallback for profile fetch')
+            const response = await fetch(`/api/test-profile`)
+            const result = await response.json()
             
-            const { data, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .single()
+            console.log('Simple Auth: API profile result:', result)
             
-            console.log('Simple Auth: Profile query result:', { data, error })
-            
-            if (error) {
-              console.error('Simple Auth: Profile query error:', error)
-              // Try alternative approach - look up by email
-              console.log('Simple Auth: Trying email lookup as fallback...')
-              const { data: emailData, error: emailError } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('email', session.user.email)
-                .single()
-              
-              console.log('Simple Auth: Email lookup result:', { emailData, emailError })
-              setProfile(emailData || null)
+            if (result.success && result.profile) {
+              console.log('Simple Auth: Profile found via API:', result.profile)
+              setProfile(result.profile)
             } else {
-              console.log('Simple Auth: Profile found:', data)
-              setProfile(data)
+              console.error('Simple Auth: API profile fetch failed:', result.error)
+              setProfile(null)
             }
           } catch (error) {
             console.error('Simple Auth: Profile fetch exception', error)
