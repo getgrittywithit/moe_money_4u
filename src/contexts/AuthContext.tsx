@@ -114,10 +114,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setTimeout(() => reject(new Error('Session fetch timeout after 5s')), 5000)
         )
         
-        const { data: { session }, error } = await Promise.race([
+        const result = await Promise.race([
           sessionPromise,
           timeoutPromise
-        ]) as any
+        ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>
+        
+        const { data: { session }, error } = result
         if (error) {
           console.error('Error getting session:', error)
           throw error
