@@ -59,7 +59,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (session?.user) {
           // Try to get profile
           console.log('Simple Auth: Fetching profile for user_id:', session.user.id)
+          console.log('Simple Auth: Session exists, access_token present:', !!session.access_token)
+          
           try {
+            // Add a small delay to ensure auth state is fully set
+            await new Promise(resolve => setTimeout(resolve, 100))
+            
             const { data, error } = await supabase
               .from('profiles')
               .select('*')
@@ -70,7 +75,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             
             if (error) {
               console.error('Simple Auth: Profile query error:', error)
-              setProfile(null)
+              // Try alternative approach - look up by email
+              console.log('Simple Auth: Trying email lookup as fallback...')
+              const { data: emailData, error: emailError } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('email', session.user.email)
+                .single()
+              
+              console.log('Simple Auth: Email lookup result:', { emailData, emailError })
+              setProfile(emailData || null)
             } else {
               console.log('Simple Auth: Profile found:', data)
               setProfile(data)

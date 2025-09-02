@@ -10,6 +10,7 @@ export default function DebugAuth() {
   const [sessionData, setSessionData] = useState<{ session: Session | null } | null>(null)
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [supabaseStatus, setSupabaseStatus] = useState<string>('Checking...')
+  const [profileTest, setProfileTest] = useState<any>(null)
 
   useEffect(() => {
     const checkSupabase = async () => {
@@ -87,6 +88,38 @@ export default function DebugAuth() {
           ) : (
             <p>Checking...</p>
           )}
+        </div>
+
+        <div className="bg-gray-100 p-4 rounded">
+          <h2 className="font-semibold mb-2">Profile Test</h2>
+          <div className="space-y-2">
+            <button 
+              onClick={async () => {
+                if (!user) {
+                  setProfileTest({ error: 'No user logged in' })
+                  return
+                }
+                
+                console.log('Testing direct profile query...')
+                const { data, error } = await supabase
+                  .from('profiles')
+                  .select('*')
+                  .eq('user_id', user.id)
+                  .single()
+                
+                setProfileTest({ data, error })
+                console.log('Direct profile test:', { data, error })
+              }}
+              className="px-4 py-2 bg-green-500 text-white rounded"
+            >
+              Test Direct Profile Query
+            </button>
+            {profileTest && (
+              <pre className="text-sm bg-white p-2 rounded border">
+                {JSON.stringify(profileTest, null, 2)}
+              </pre>
+            )}
+          </div>
         </div>
 
         <div className="bg-gray-100 p-4 rounded">
