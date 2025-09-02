@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContextSimple'
 import AppLayout from '@/components/layout/AppLayout'
 import ReceiptUpload from '@/components/receipts/ReceiptUpload'
 import ReceiptApproval from '@/components/receipts/ReceiptApproval'

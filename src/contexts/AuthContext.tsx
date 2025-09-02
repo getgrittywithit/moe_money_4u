@@ -108,6 +108,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initializeAuth = async () => {
       try {
         console.log('Initializing auth...')
+        console.log('Setting up auth state change listener...')
+        
+        // Failsafe: Set loading to false after 10 seconds no matter what
+        const timeoutId = setTimeout(() => {
+          console.log('Auth initialization timeout - setting loading to false')
+          if (mounted) {
+            setLoading(false)
+          }
+        }, 10000)
         
         // Set up the auth state change listener first
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -140,8 +149,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         )
         
+        console.log('Auth listener set up, checking initial session...')
+        
         // Try to get initial session (but don't wait too long)
         try {
+          console.log('Calling getSession...')
           const { data: { session } } = await supabase.auth.getSession()
           console.log('Initial session check:', session ? 'Found' : 'Not found')
           
@@ -156,17 +168,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           console.error('Error getting initial session:', error)
           // Don't let this block the app, onAuthStateChange will handle it
           if (mounted) {
+            console.log('Setting loading to false due to session error')
             setLoading(false)
           }
         }
         
         return () => {
           mounted = false
+          clearTimeout(timeoutId)
           subscription.unsubscribe()
         }
       } catch (error) {
         console.error('Error initializing auth:', error)
         if (mounted) {
+          console.log('Setting loading to false due to init error')
           setLoading(false)
         }
       }

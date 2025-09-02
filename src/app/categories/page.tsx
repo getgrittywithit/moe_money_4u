@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContextSimple'
 import AppLayout from '@/components/layout/AppLayout'
 import CategoryManager from '@/components/categories/CategoryManager'
 import { useRouter } from 'next/navigation'

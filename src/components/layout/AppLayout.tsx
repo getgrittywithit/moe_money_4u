@@ -1,7 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContextSimple'
 import { Button } from '@/components/ui/button'
 import Sidebar from './Sidebar'
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContextSimple'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'

@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/contexts/AuthContextSimple'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import SummaryCards from '@/components/dashboard/SummaryCards'
