@@ -43,19 +43,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const getProfile = async (userId: string) => {
     try {
+      console.log('getProfile called with userId:', userId)
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', userId)
         .single()
 
+      console.log('Profile query result:', { data, error })
+      
       if (error) {
         console.error('Error fetching profile:', error)
         return null
       }
       return data
     } catch (error) {
-      console.error('Error fetching profile:', error)
+      console.error('Error in getProfile catch:', error)
       return null
     }
   }
@@ -104,17 +107,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       try {
         console.log('Getting auth session...')
         console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('About to call supabase.auth.getSession()')
+        
+        const sessionPromise = supabase.auth.getSession()
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Session fetch timeout after 5s')), 5000)
+        )
+        
+        const { data: { session }, error } = await Promise.race([
+          sessionPromise,
+          timeoutPromise
+        ]) as any
         if (error) {
           console.error('Error getting session:', error)
           throw error
         }
         console.log('Session retrieved:', session ? 'Session found' : 'No session')
+        console.log('Session details:', session ? { userId: session.user.id, email: session.user.email } : null)
         setUser(session?.user ?? null)
         
         if (session?.user) {
           console.log('User found, getting profile for:', session.user.email)
+          console.log('Calling getProfile with userId:', session.user.id)
           let profileData = await getProfile(session.user.id)
+          console.log('Profile fetch result:', profileData ? 'Found' : 'Not found')
           
           // If no profile found, try to link existing profile
           if (!profileData) {
@@ -124,6 +140,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           setProfile(profileData)
           console.log('Profile set:', profileData ? 'Success' : 'Failed')
+        } else {
+          console.log('No session user found')
         }
       } catch (error) {
         console.error('Error in getSession:', error)
