@@ -3,10 +3,11 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
+import { Session } from '@supabase/supabase-js'
 
 export default function DebugAuth() {
   const { user, profile, loading } = useAuth()
-  const [sessionData, setSessionData] = useState<any>(null)
+  const [sessionData, setSessionData] = useState<{ session: Session | null } | null>(null)
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [supabaseStatus, setSupabaseStatus] = useState<string>('Checking...')
 

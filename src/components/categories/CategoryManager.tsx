@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,11 +38,7 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
     budgetAmount: ''
   })
 
-  useEffect(() => {
-    fetchCategories()
-  }, [profileId])
-
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       const response = await fetch(`/api/categories?profileId=${profileId}`)
       if (!response.ok) throw new Error('Failed to fetch categories')
@@ -55,7 +51,11 @@ export default function CategoryManager({ profileId }: CategoryManagerProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [profileId])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
 
   const loadPredefinedCategories = async () => {
     if (!confirm('This will add your personal expense categories. Continue?')) return
