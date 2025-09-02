@@ -5,12 +5,25 @@ import { supabase } from '@/lib/supabase'
 import { useEffect, useState } from 'react'
 import { Session } from '@supabase/supabase-js'
 
+interface ProfileTestResult {
+  data?: {
+    id: string
+    email: string
+    first_name: string
+    role: string
+  } | null
+  error?: {
+    message: string
+    code?: string
+  } | null
+}
+
 export default function DebugAuth() {
   const { user, profile, loading } = useAuth()
   const [sessionData, setSessionData] = useState<{ session: Session | null } | null>(null)
   const [sessionError, setSessionError] = useState<string | null>(null)
   const [supabaseStatus, setSupabaseStatus] = useState<string>('Checking...')
-  const [profileTest, setProfileTest] = useState<any>(null)
+  const [profileTest, setProfileTest] = useState<ProfileTestResult | null>(null)
 
   useEffect(() => {
     const checkSupabase = async () => {
@@ -96,7 +109,7 @@ export default function DebugAuth() {
             <button 
               onClick={async () => {
                 if (!user) {
-                  setProfileTest({ error: 'No user logged in' })
+                  setProfileTest({ error: { message: 'No user logged in' } })
                   return
                 }
                 
