@@ -58,16 +58,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (session?.user) {
           // Try to get profile
+          console.log('Simple Auth: Fetching profile for user_id:', session.user.id)
           try {
-            const { data } = await supabase
+            const { data, error } = await supabase
               .from('profiles')
               .select('*')
               .eq('user_id', session.user.id)
               .single()
             
-            setProfile(data)
+            console.log('Simple Auth: Profile query result:', { data, error })
+            
+            if (error) {
+              console.error('Simple Auth: Profile query error:', error)
+              setProfile(null)
+            } else {
+              console.log('Simple Auth: Profile found:', data)
+              setProfile(data)
+            }
           } catch (error) {
-            console.error('Simple Auth: Profile fetch error', error)
+            console.error('Simple Auth: Profile fetch exception', error)
             setProfile(null)
           }
         } else {
