@@ -103,7 +103,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const getSession = async () => {
       try {
         console.log('Getting auth session...')
-        const { data: { session } } = await supabase.auth.getSession()
+        console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('Error getting session:', error)
+          throw error
+        }
+        console.log('Session retrieved:', session ? 'Session found' : 'No session')
         setUser(session?.user ?? null)
         
         if (session?.user) {
@@ -121,6 +127,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error('Error in getSession:', error)
+        if (error instanceof Error) {
+          console.error('Error details:', error.message, error.stack)
+        }
       } finally {
         setLoading(false)
         console.log('Auth loading complete')
