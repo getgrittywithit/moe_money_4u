@@ -103,88 +103,76 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   useEffect(() => {
-    const getSession = async () => {
+    let mounted = true
+    
+    const initializeAuth = async () => {
       try {
-        console.log('Getting auth session...')
-        console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-        console.log('About to call supabase.auth.getSession()')
+        console.log('Initializing auth...')
         
-        const sessionPromise = supabase.auth.getSession()
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Session fetch timeout after 5s')), 5000)
+        // Set up the auth state change listener first
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            if (!mounted) return
+            
+            try {
+              console.log('Auth state change:', event, session?.user?.email)
+              setUser(session?.user ?? null)
+              
+              if (session?.user) {
+                let profileData = await getProfile(session.user.id)
+                
+                // If no profile found, try to link existing profile
+                if (!profileData && event === 'SIGNED_IN') {
+                  profileData = await linkProfileToUser(session.user)
+                }
+                
+                setProfile(profileData)
+              } else {
+                setProfile(null)
+              }
+            } catch (error) {
+              console.error('Error in auth state change:', error)
+            } finally {
+              if (mounted) {
+                setLoading(false)
+              }
+            }
+          }
         )
         
-        const result = await Promise.race([
-          sessionPromise,
-          timeoutPromise
-        ]) as Awaited<ReturnType<typeof supabase.auth.getSession>>
-        
-        const { data: { session }, error } = result
-        if (error) {
-          console.error('Error getting session:', error)
-          throw error
-        }
-        console.log('Session retrieved:', session ? 'Session found' : 'No session')
-        console.log('Session details:', session ? { userId: session.user.id, email: session.user.email } : null)
-        setUser(session?.user ?? null)
-        
-        if (session?.user) {
-          console.log('User found, getting profile for:', session.user.email)
-          console.log('Calling getProfile with userId:', session.user.id)
-          let profileData = await getProfile(session.user.id)
-          console.log('Profile fetch result:', profileData ? 'Found' : 'Not found')
-          
-          // If no profile found, try to link existing profile
-          if (!profileData) {
-            console.log('No profile found, attempting to link...')
-            profileData = await linkProfileToUser(session.user)
-          }
-          
-          setProfile(profileData)
-          console.log('Profile set:', profileData ? 'Success' : 'Failed')
-        } else {
-          console.log('No session user found')
-        }
-      } catch (error) {
-        console.error('Error in getSession:', error)
-        if (error instanceof Error) {
-          console.error('Error details:', error.message, error.stack)
-        }
-      } finally {
-        setLoading(false)
-        console.log('Auth loading complete')
-      }
-    }
-
-    getSession()
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+        // Try to get initial session (but don't wait too long)
         try {
-          console.log('Auth state change:', event, session?.user?.email)
-          setUser(session?.user ?? null)
+          const { data: { session } } = await supabase.auth.getSession()
+          console.log('Initial session check:', session ? 'Found' : 'Not found')
           
-          if (session?.user) {
-            let profileData = await getProfile(session.user.id)
-            
-            // If no profile found, try to link existing profile
-            if (!profileData && event === 'SIGNED_IN') {
-              profileData = await linkProfileToUser(session.user)
-            }
-            
-            setProfile(profileData)
-          } else {
-            setProfile(null)
+          if (session && mounted) {
+            // Manually trigger the auth state change handler
+            subscription.callback('INITIAL_SESSION', session)
+          } else if (mounted) {
+            // No session, we can stop loading
+            setLoading(false)
           }
         } catch (error) {
-          console.error('Error in auth state change:', error)
-        } finally {
+          console.error('Error getting initial session:', error)
+          // Don't let this block the app, onAuthStateChange will handle it
+          if (mounted) {
+            setLoading(false)
+          }
+        }
+        
+        return () => {
+          mounted = false
+          subscription.unsubscribe()
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error)
+        if (mounted) {
           setLoading(false)
         }
       }
-    )
-
-    return () => subscription.unsubscribe()
+    }
+    
+    initializeAuth()
   }, [])
 
   const signOut = async () => {
