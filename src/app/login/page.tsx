@@ -1,20 +1,30 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [isResetPassword, setIsResetPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
+
+  useEffect(() => {
+    // If user is already logged in, redirect to home
+    if (user && !authLoading) {
+      console.log('User already logged in, redirecting to home')
+      router.push('/')
+    }
+  }, [user, authLoading, router])
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,11 +47,13 @@ export default function LoginPage() {
         if (error) throw error
         setMessage('Check your email for the confirmation link!')
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         })
         if (error) throw error
+        console.log('Login successful:', data.user?.email)
+        console.log('Redirecting to home page...')
         router.push('/')
       }
     } catch (error) {
@@ -49,6 +61,15 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div>Checking authentication...</div>
+      </div>
+    )
   }
 
   return (
